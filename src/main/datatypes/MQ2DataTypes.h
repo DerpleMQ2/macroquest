@@ -751,6 +751,8 @@ public:
 	bool FromString(MQVarPtr& VarPtr, const char* Source) override;
 
 	static bool dataWindow(const char* szIndex, MQTypeVar& Ret);
+
+	bool getInvWndProperty(CXWnd* pWnd, const char* Index, MQTypeVar& Dest);
 };
 
 //============================================================================

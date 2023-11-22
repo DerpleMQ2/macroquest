@@ -34,6 +34,7 @@ enum class WindowMembers
 	HScrollMax,
 	HScrollPct,
 	HScrollPos,
+	InvSlotProperty,
 	Items,
 	List,
 	Minimized,
@@ -100,6 +101,7 @@ MQ2WindowType::MQ2WindowType() : MQ2Type("window")
 	ScopedTypeMember(WindowMembers, HScrollMax);
 	ScopedTypeMember(WindowMembers, HScrollPct);
 	ScopedTypeMember(WindowMembers, HScrollPos);
+	ScopedTypeMember(WindowMembers, InvSlotProperty);
 	ScopedTypeMember(WindowMembers, Items);
 	ScopedTypeMember(WindowMembers, List);
 	ScopedTypeMember(WindowMembers, Minimized);
@@ -630,6 +632,9 @@ bool MQ2WindowType::GetMember(MQVarPtr VarPtr, const char* Member, char* Index, 
 		return false;
 	}
 
+	case WindowMembers::InvSlotProperty:
+		return getInvWndProperty(pWnd, Index, Dest);
+
 	case WindowMembers::Name:
 		Dest.Type = pStringType;
 		if (CXMLData* pXMLData = pWnd->GetXMLData())
@@ -855,6 +860,138 @@ bool MQ2WindowType::dataWindow(const char* szIndex, MQTypeVar& Ret)
 			Ret.Type = pWindowType;
 			return true;
 		}
+	}
+
+	return false;
+}
+
+bool MQ2WindowType::getInvWndProperty(CXWnd* pWnd, const char* Index, MQTypeVar& Dest)
+{
+	if (pWnd->GetType() != UI_InvSlot)
+		return false;
+
+	if (!Index || !Index[0])
+		return false;
+
+	CInvSlotWnd* pInvWnd = static_cast<CInvSlotWnd*>(pWnd);
+
+	if (MaybeExactCompare("Background", Index))
+	{
+		Dest.Type = pStringType;
+		strcpy_s(DataTypeTemp, pInvWnd->pBackground->GetName().c_str());
+		Dest.Ptr = &DataTypeTemp[0];
+		return true;
+	}
+
+	if (MaybeExactCompare("ItemLocation", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->ItemLocation.GetLocation();
+		return true;
+	}
+
+	// This should use a Index
+	if (MaybeExactCompare("ItemIndexSlot1", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->ItemLocation.GetIndex().GetSlot(0);
+		return true;
+	}
+
+	if (MaybeExactCompare("ItemIndexSlot2", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->ItemLocation.GetIndex().GetSlot(1);
+		return true;
+	}
+
+	if (MaybeExactCompare("ItemIndexSlot3", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->ItemLocation.GetIndex().GetSlot(2);
+		return true;
+	}
+
+	if (MaybeExactCompare("Item", Index))
+	{
+		// An invslot is either linked to a slot, or an item. Slots on the character pane are linked to slots.
+		// Slots in your hotbar are usually linked to an item.
+
+		Dest.Type = pItemType;
+		Dest = pItemType->MakeTypeVar(pInvWnd->LinkedItem ? pInvWnd->LinkedItem : pLocalPC->GetItemByGlobalIndex(pInvWnd->ItemLocation));
+		return true;
+	}
+
+	if (MaybeExactCompare("ItemOffsetX", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->ItemOffsetX;
+		return true;
+	}
+
+	if (MaybeExactCompare("ItemOffsetY", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->ItemOffsetY;
+		return true;
+	}
+
+	if (MaybeExactCompare("ItemTexture", Index))
+	{
+		Dest.Type = pStringType;
+		strcpy_s(DataTypeTemp, pInvWnd->ptItem->GetName().c_str());
+		Dest.Ptr = &DataTypeTemp[0];
+		return true;
+	}
+
+	if (MaybeExactCompare("Quantity", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->Quantity;
+		return true;
+	}
+
+	if (MaybeExactCompare("Selected", Index))
+	{
+		Dest.Type = pBoolType;
+		Dest.DWord = pInvWnd->bSelected;
+		return true;
+	}
+
+	if (MaybeExactCompare("FindSelected", Index))
+	{
+		Dest.Type = pBoolType;
+		Dest.DWord = pInvWnd->bFindSelected;
+		return true;
+	}
+
+	if (MaybeExactCompare("HotButton", Index))
+	{
+		Dest.Type = pBoolType;
+		Dest.DWord = pInvWnd->bHotButton;
+		return true;
+	}
+
+	if (MaybeExactCompare("InventorySlotLinked", Index))
+	{
+		Dest.Type = pBoolType;
+		Dest.DWord = pInvWnd->bInventorySlotLinked;
+		return true;
+	}
+
+	if (MaybeExactCompare("Text", Index))
+	{
+		Dest.Type = pStringType;
+		strcpy_s(DataTypeTemp, pInvWnd->pTextObject->GetText().c_str());
+		Dest.Ptr = &DataTypeTemp[0];
+		return true;
+	}
+
+	if (MaybeExactCompare("Mode", Index))
+	{
+		Dest.Type = pIntType;
+		Dest.DWord = pInvWnd->Mode;
+		return true;
 	}
 
 	return false;
