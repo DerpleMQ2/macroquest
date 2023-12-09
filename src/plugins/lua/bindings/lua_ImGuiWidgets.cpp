@@ -1443,6 +1443,33 @@ static std::unique_ptr<LuaImGuiPayload> GetDragDropPayload()
 	return payload == nullptr ? nullptr : std::make_unique<LuaImGuiPayload>(payload);
 }
 
+// Plotting
+static void PlotLines(const char* label, const sol::table& values_table, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0), int stride = sizeof(float))
+{
+	std::vector<float> floats;
+	floats.reserve(values_count);
+	for (int i = 1; i <= values_count; i++)
+	{
+		const sol::optional<float> floatItem = values_table.get<sol::optional<float>>(i);
+		floats.push_back(floatItem.value_or(0.0f));
+	}
+
+	return ImGui::PlotLines(label, floats.data(), values_count, values_offset, overlay_text, scale_min, scale_max, graph_size, stride);
+}
+
+static void PlotHistogram(const char* label, const sol::table& values_table, int values_count, int values_offset = 0, const char* overlay_text = NULL, float scale_min = FLT_MAX, float scale_max = FLT_MAX, ImVec2 graph_size = ImVec2(0, 0), int stride = sizeof(float))
+{
+	std::vector<float> floats;
+	floats.reserve(values_count);
+	for (int i = 1; i <= values_count; i++)
+	{
+		const sol::optional<float> floatItem = values_table.get<sol::optional<float>>(i);
+		floats.push_back(floatItem.value_or(0.0f));
+	}
+
+	return ImGui::PlotHistogram(label, floats.data(), values_count, values_offset, overlay_text, scale_min, scale_max, graph_size, stride);
+}
+
 void RegisterBindings_ImGuiWidgets(sol::table& ImGui)
 {
 	#pragma region Widgets: Text
@@ -2020,6 +2047,28 @@ void RegisterBindings_ImGuiWidgets(sol::table& ImGui)
 	));
 	ImGui.set_function("EndDragDropTarget", EndDragDropTarget);
 	ImGui.set_function("GetDragDropPayload", GetDragDropPayload);
+	#pragma endregion
+
+		#pragma region Widgets: Plotter
+	ImGui.set_function("PlotLines", sol::overload(
+		[](const char* label, const sol::table& values_table, int values_count) { return PlotLines(label, values_table, values_count); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset) { return PlotLines(label, values_table, values_count, values_offset); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text) { return PlotLines(label, values_table, values_count, values_offset, overlay_text); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min) { return PlotLines(label, values_table, values_count, values_offset, overlay_text, scale_min); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max) { return PlotLines(label, values_table, values_count, values_offset, overlay_text, scale_min, scale_max); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2& graph_size) { return PlotLines(label, values_table, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2& graph_size, int stride) { return PlotLines(label, values_table, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size, stride); }
+	));
+
+	ImGui.set_function("PlotHistogram", sol::overload(
+		[](const char* label, const sol::table& values_table, int values_count) { return PlotHistogram(label, values_table, values_count); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset) { return PlotHistogram(label, values_table, values_count, values_offset); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text) { return PlotHistogram(label, values_table, values_count, values_offset, overlay_text); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min) { return PlotHistogram(label, values_table, values_count, values_offset, overlay_text, scale_min); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max) { return PlotHistogram(label, values_table, values_count, values_offset, overlay_text, scale_min, scale_max); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2& graph_size) { return PlotHistogram(label, values_table, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size); },
+		[](const char* label, const sol::table& values_table, int values_count, int values_offset, const char* overlay_text, float scale_min, float scale_max, ImVec2& graph_size, int stride) { return PlotHistogram(label, values_table, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size, stride); }
+	));
 	#pragma endregion
 }
 
