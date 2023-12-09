@@ -16,6 +16,8 @@
 #include "MQ2Main.h"
 #include "CrashHandler.h"
 
+#include "MQActorAPI.h"
+
 #include "MQ2KeyBinds.h"
 #include "ImGuiManager.h"
 #include "GraphicsResources.h"
@@ -41,7 +43,7 @@
 
 #define CLIENT_OVERRIDE 0
 
-#if defined(LIVE)
+#if IS_LIVE_CLIENT
 
 #if !defined(_M_AMD64)
 #error Live build is only for x64
@@ -50,7 +52,7 @@
 #define MacroQuestWinClassName "__MacroQuestTray(Live)"
 #define MacroQuestWinName "MacroQuest(Live)"
 
-#elif defined(TEST)
+#elif IS_TEST_CLIENT
 
 #if !defined(_M_AMD64)
 #error Test build is only for x64
@@ -59,7 +61,16 @@
 #define MacroQuestWinClassName "__MacroQuestTray(Test)"
 #define MacroQuestWinName "MacroQuest(Test)"
 
-#elif defined(EMULATOR)
+#elif IS_BETA_CLIENT
+
+#if !defined(_M_AMD64)
+#error Beta build is only for x64
+#endif
+#pragma message("Building MacroQuest for BETA (x64)")
+#define MacroQuestWinClassName "__MacroQuestTray(Beta)"
+#define MacroQuestWinName "MacroQuest(Beta)"
+
+#elif IS_EMU_CLIENT
 
 #if defined(_M_AMD64)
 #error Emulator Build is only for x86
@@ -86,6 +97,7 @@ void ShutdownInternalModules();
 MQModule* GetSpellsModule();
 MQModule* GetImGuiToolsModule();
 MQModule* GetDataAPIModule();
+MQModule* GetActorAPIModule();
 MQModule* GetGroundSpawnsModule();
 MQModule* GetSpawnsModule();
 MQModule* GetItemsModule();
@@ -575,7 +587,6 @@ void DoMainThreadInitialization()
 {
 	gpMainAPI = new MainImpl();
 
-	InitializePipeClient();
 	InitializeMQ2Commands();
 	InitializeDisplayHook();
 	InitializeMouseHooks();
@@ -593,6 +604,7 @@ void DoMainThreadInitialization()
 	AddInternalModule(GetImGuiToolsModule());
 	AddInternalModule(GetSpellsModule());
 	AddInternalModule(GetDataAPIModule());
+	AddInternalModule(GetActorAPIModule());
 	AddInternalModule(GetGroundSpawnsModule());
 	AddInternalModule(GetSpawnsModule());
 	AddInternalModule(GetItemsModule());
@@ -805,7 +817,6 @@ void MQ2Shutdown()
 	ShutdownStringDB();
 	ShutdownDetours();
 	ShutdownMQ2Benchmarks();
-	ShutdownPipeClient();
 
 	DebugSpew("Shutdown completed");
 	ShutdownLogging();
@@ -1138,12 +1149,17 @@ MainImpl::MainImpl()
 {
 	pDataAPI = new MQDataAPI();
 	pDataAPI->Initialize();
+
+	pActorAPI = new MQActorAPI();
 }
 
 MainImpl::~MainImpl()
 {
 	delete pDataAPI;
 	pDataAPI = nullptr;
+
+	delete pActorAPI;
+	pActorAPI = nullptr;
 }
 
 bool MainImpl::AddTopLevelObject(const char* name, MQTopLevelObjectFunction callback, MQPlugin* owner)
@@ -1159,6 +1175,41 @@ bool MainImpl::RemoveTopLevelObject(const char* name, MQPlugin* owner)
 MQTopLevelObject* MainImpl::FindTopLevelObject(const char* name)
 {
 	return pDataAPI->FindTopLevelObject(name);
+}
+
+void MainImpl::SendToActor(
+	postoffice::Dropbox* dropbox,
+	const postoffice::Address& address,
+	const std::string& data,
+	const postoffice::ResponseCallbackAPI& callback,
+	MQPlugin* owner)
+{
+	pActorAPI->SendToActor(dropbox, address, data, callback, owner);
+}
+
+void MainImpl::ReplyToActor(
+	postoffice::Dropbox* dropbox,
+	const std::shared_ptr<postoffice::Message>& message,
+	const std::string& data,
+	uint8_t status,
+	MQPlugin* owner)
+{
+	pActorAPI->ReplyToActor(dropbox, message, data, status, owner);
+}
+
+postoffice::Dropbox* MainImpl::AddActor(
+	const char* localAddress,
+	postoffice::ReceiveCallbackAPI&& receive,
+	MQPlugin* owner)
+{
+	return pActorAPI->AddActor(localAddress, std::move(receive), owner);
+}
+
+void MainImpl::RemoveActor(
+	postoffice::Dropbox*& dropbox,
+	MQPlugin* owner)
+{
+	pActorAPI->RemoveActor(dropbox, owner);
 }
 
 MainImpl* gpMainAPI = nullptr;
