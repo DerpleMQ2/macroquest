@@ -1,3 +1,210 @@
+April 25, 2024:
+- Adjust timestamps in chat and logging to be in local time (#853, #852).
+- Add logging auto cleanup feature to launcher (#419).
+
+April 17, 2024:
+- Update for live patch
+
+April 11, 2024:
+- Update for test patch
+
+April 1, 2024:
+- Update for live patch
+
+March 30, 2024:
+- Update for live patch
+- Update for test patch
+
+March 23, 2024:
+- Update for test patch
+
+March 13, 2024:
+- Update for live patch
+
+March 7, 2024:
+- Update for test patch
+
+Feb 29, 2024:
+- autologin: Fix bug causing the wrong account to be assigned to characters at character select.
+- autologin: Fix bug causing blank password to be assigned to accounts at character select.
+- autologin: Add error message when launching game if everquest path is invalid.
+
+Feb 28, 2024:
+- test: Updated for latest patch
+
+Feb 26, 2024:
+- autologin: Fix loader losing track of logged in sessions when it is restarted
+- autologin: Fix several issues related to tracking the logged in state of characters
+- autologin: Fix in-game commands to now use state machine to properly handle character changes.
+- autologin: Menus will now indicate when a character is logged in, but on a different profile.
+  Selecting that profile will apply the profile to the currently logged in character.
+- autologin: Menus will now indicate when an account is already logged in, but on a different
+  character.
+- autologin: The "Show hidden characters" option is now persisted
+- autologin: Profile groups panel is now a resizable side bar instead of a drop down menu
+- autologin: Added ability to double click to expand in tree view panel
+- autologin: It is now possible to switch to any character on any account on any server, from anywhere.
+- autologin: Fix infinite loop that could occur during login.
+
+Feb 23, 2024:
+- autologin: Fix ini import creating blank passwords when stationnames entries exist.
+- autologin: Add right click option to Characters UI to add a character to a profile group.
+- autologin: Fix process tracking for loaded profiles.
+- loader: Add process list to show processes currently being tracked.
+
+Feb 22, 2024:
+- live: updated for live patch
+- autologin: Profile context menus can now toggle their state with ctrl+click
+- autologin: Profile context menus now use a star instead of check mark. Functionality is the same.
+- autologin: Profiles can now be freely re-ordered independent of star state.
+- autologin: Increase default delay when launching multiple instances.
+- autologin: Various improvements to context menus (still have issues with loaded state...)
+- autologin: Add logged in indicators to UI
+
+- autologin: Fix crash that could occur when the MQ launcher starts up
+- autologin: Fix remove profile showing group
+- autologin: Fix tray icon disappearing if explorer crashes or restarts
+- autologin: Fix an issue that might cause an extra instance of EQ to start unintentionally.
+- autologin: Add "Launch All" item to profile menu
+- autologin: Add first pass at online indicator to context menus. More to come in the future.
+- autologin: Changed check marks in autologin ui to check boxes. Single click on the check box will toggle, and tooltip will describe its behavior.
+- autologin: Add text to indicate that profile rows can be reordered via drag & drop.
+
+Feb 21, 2024:
+- live: Updated for latest patch
+- Add EQ cursor emulation for ImGui windows. This can be toggled in overlay settings (on by default).
+  When this feature is enabled, the EQ cursor and its attachments will appear over imgui windows.
+
+Feb 18, 2024:
+- test: Updated for latest patch
+
+Feb 16, 2024:
+- Changes to AutoLogin:
+- added sorting for characters that persists to context menu
+- added filter to hide characters from context menu
+- added ordering to profiles for login order and display
+- added sorting and searching to accounts
+- added some tooltips 
+
+Feb 14, 2024:
+- test: Fix Me.Platinum etc always returning 0.
+
+Feb 13, 2024:
+- test: Updated for latest patch
+- Completely revamped the autologin interface and storage
+- MQ's context menu is now driven by imgui
+- Added an extendable window gui to MQ
+- login profiles and character management is now driven through the main gui
+- removed sessions and replaced station names with single-entry profiles
+- passing the profile name to /login will load the first character in the profile
+- removed the autologin ini, replaced with sqlite db that can be copied across computers
+- a master pass has been added to provide encryption for account passwords _only_
+- the user will be prompted for a master password at first startup on a computer
+- the master password will be stored locally outside of the db (in the registry)
+- if the autologin plugin is running, logging in a new account will store the account name and associated characters in the database
+- manually editing the server list mapping is no longer needed (it is auto detected the first time you see that server in your list)
+
+Feb 3, 2024:
+- emu: Fix /timestamp showing seconds to the decimal
+
+Feb 2, 2024:
+- Add Social TLO (#825)
+
+Feb 1, 2024
+- live: Updated for latest patch
+
+Jan 30, 2024:
+- Disable jit when delaying so that delays are not optimized away (#822)
+- /doability will now accept quoted or unquoted ability names
+- /doability will now work for innate skills like slam (#371)
+- mq.TLO.Me.Ability is now a boolean. It returns true or false based on whether you have the ability.
+- mq.TLO.Me.AbilityReady will no longer say an ability is ready if you don't have that ability.
+- Added mq.TLO.Me.AbilityTimerTotal which will return the total amount of time an ability takes to refresh. This is only available while the ability is in cooldown, otherwise it returns 0. Useful for converting mq.TLO.Me.AbilityTimer into a percentage. (#823)
+- mq.TLO.Me.AltCurrency now works with the singular or plural name of the currency
+- plugins: GetZoneExpansionName(0) would previously return "Original EQ" but now returns "EverQuest"
+
+Jan 27, 2024:
+- test: Updated for latest patch
+
+Jan 20, 2024:
+- Fix Mercenary.State reporting unknown when mercenary is active (#811)
+- Fix Heading.Name/Heading.ShortName potentially going out of bounds (#813)
+- Change Me.BoundLocation.Heading to return heading type instead of a 512 unit float
+
+Jan 19, 2024:
+- Fix mq.pickle not properly escaping backslashes and not properly serializing numbers. (#815, #771).
+
+Jan 18, 2024:
+- Fix issue where textures would not draw if they had not already been preloaded.
+- Fix FPS plot in benchmark window to use its own axis.
+
+Jan 17, 2024:
+- live: Updated for latest patch
+- live: DirectX 11 is now on the live client, some visual features may be
+  missing or not working correctly.
+
+Jan 15, 2024:
+- Update CrashDetected popup with reminder that text can be copied and also add PID (#765).
+- Update faction names by using dbstr_us.txt (#806)
+- Fix Me.Origin (#807)
+- Fix several window properties that had been swapped (Click Through, Show Border, Escapable)
+
+Jan 14, 2024:
+- test: Updated for latest patch
+
+Jan 11, 2024:
+- Prospective fix for map crash (#798)
+- PackageMan now accepts the debug parameter (see docs)
+- luarocks cache has been moved to the modules folder
+
+Jan 8, 2024:
+- Fix clipping of ImGuiConsole, add opacity. (#805)
+- Fix Window.SetText correctly sending change event.
+
+Dec 18, 2023:
+- Update ImGui to 1.90
+- Update ImPlot to 0.17
+- lua: ImGui and ImPlot lua bindings fully refreshed with 100% coverage of definitions.
+- lua: mq-definitions VSCode extension available at https://marketplace.visualstudio.com/items?itemName=ZenithCodeForge.mq-defs
+- datatypes: add TradeskillDepot.DepositItem
+- datatypes: add Type.InheritedType
+- datatypes: add Me.LaurionInnVoucher, Me.ShalowainsPrivateReserve
+
+Dec 13, 2023:
+- test: Updated for latest patch
+
+Dec 12, 2023:
+- live: Updated for latest patch
+- live: Updated for latest patch (again)
+
+Dec 9, 2023:
+- Fix formatting of links in console when line contains multiple links
+
+Dec 8, 2023:
+- live: Fix spawn manager crash
+- test: Fix spawn manager crash
+
+Dec 5, 2023:
+- live: Updated for latest expansion
+
+Dec 4, 2023:
+- test: Fix ZoneGuide
+- Add Me.PersonaLevel - takes class shortname as param, returns level of that class persona.
+  e.g. ${Me.PersonaLevel[DRU]} returns level of druid class persona.
+
+Dec 2, 2023:
+- test: Updated for latest patch
+
+Nov 28, 2023:
+- Actors are now live for use in plugins, see https://docs.macroquest.org/plugins/developing/actors/
+- Actors are also now live for use in lua scripts, see examples/buffbeg.lua for example usage.
+
+Nov 22, 2023:
+- Update vcpkg dependencies
+
+Nov 19, 2023:
+- Add ability to create textures from image files. See examples/texture.lua for example usage.
+
 Nov 15, 2023:
 - live: Fix spell display window (#782).
 - autologin: Enable /camp fast when switching characters

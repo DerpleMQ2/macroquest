@@ -1,6 +1,6 @@
 /*
  * MacroQuest: The extension platform for EverQuest
- * Copyright (C) 2002-2023 MacroQuest Authors
+ * Copyright (C) 2002-present MacroQuest Authors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as published by
@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "./NamedPipesProtocol.h"
+#include "NamedPipesProtocol.h"
 
 #include <wil/resource.h>
 #include <atomic>
@@ -54,6 +54,7 @@ public:
 	PipeMessage() = default;
 	PipeMessage(MQMessageId messageId, const void* data, size_t length);
 	PipeMessage(const MQMessageHeader& header, const void* data, size_t length);
+	PipeMessage(const PipeMessage& message, const void* data, size_t length);
 
 	virtual ~PipeMessage();
 
@@ -76,6 +77,23 @@ public:
 			return MQMessageId::MSG_NULL;
 
 		return m_header->messageId;
+	}
+
+	MQRequestMode GetRequestMode() const
+	{
+		if (!m_header)
+			return MQRequestMode::SimpleMessage;
+
+		return m_header->mode;
+	}
+
+	bool SetRequestMode(MQRequestMode mode)
+	{
+		if (!m_header)
+			return false;
+
+		m_header->mode = mode;
+		return true;
 	}
 
 	template <typename T = void>

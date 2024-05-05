@@ -1,6 +1,6 @@
 /*
  * MacroQuest: The extension platform for EverQuest
- * Copyright (C) 2002-2023 MacroQuest Authors
+ * Copyright (C) 2002-present MacroQuest Authors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as published by
@@ -60,6 +60,7 @@ enum class MQRequestMode : uint8_t
 constexpr int MsgError_ConnectionClosed        = -1;                  // connection was closed
 constexpr int MsgError_NoConnection            = -2;                  // no connection established
 constexpr int MsgError_RoutingFailed           = -3;                  // message routing failed
+constexpr int MsgError_AmbiguousRecipient      = -4;                  // RPC message couldn't determine single recipient
 
 #pragma pack(push)
 #pragma pack(1)

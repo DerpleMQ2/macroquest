@@ -1,6 +1,6 @@
 /*
  * MacroQuest: The extension platform for EverQuest
- * Copyright (C) 2002-2023 MacroQuest Authors
+ * Copyright (C) 2002-present MacroQuest Authors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as published by
@@ -31,6 +31,7 @@
 namespace mq {
 
 IDXGISwapChain* gpDXGISwapChain = nullptr;
+ID3D11Device* gpD3D11Device = nullptr;
 
 struct ScopedStateBlock
 {
@@ -250,18 +251,6 @@ static wil::unique_hwnd CreateTempWindow()
 	return wil::unique_hwnd{ result };
 }
 
-//static IDirect3DDevice9* AcquireDevice()
-//{
-//	IDirect3DDevice9* pDevice = nullptr;
-//
-//	if (pGraphicsEngine && pGraphicsEngine->pRender && pGraphicsEngine->pRender->pD3DDevice)
-//	{
-//		return pGraphicsEngine->pRender->pD3DDevice;
-//	}
-//
-//	return nullptr;
-//}
-
 bool MQGraphicsEngineDX11::InstallHooks()
 {
 	HMODULE d3d11 = GetModuleHandle("d3d11.dll");
@@ -398,10 +387,10 @@ OverlayHookStatus MQGraphicsEngineDX11::InitializeOverlayHooks()
 		return OverlayHookStatus::Success;
 	}
 
-	//if (!pGraphicsEngine || !pGraphicsEngine->pRender || !pGraphicsEngine->pRender->pD3DDevice)
-	//{
-	//	return OverlayHookStatus::MissingDevice;
-	//}
+	if (!pGraphicsEngine || !pGraphicsEngine->pRender || !pGraphicsEngine->pRender->pD3DDevice)
+	{
+		return OverlayHookStatus::MissingDevice;
+	}
 
 	if (!InstallHooks())
 	{
@@ -451,6 +440,7 @@ void MQGraphicsEngineDX11::AcquireDevice(IDXGISwapChain* SwapChain)
 			m_swapChain = SwapChain;
 			gpDXGISwapChain = SwapChain;
 			gpD3D9Device = GetDeviceFromEQ();
+			gpD3D11Device = m_device.get();
 
 			m_deviceAcquired = true;
 
@@ -486,6 +476,7 @@ void MQGraphicsEngineDX11::OnDeviceLost(IDXGISwapChain* SwapChain)
 
 		gpDXGISwapChain = nullptr;
 		gpD3D9Device = nullptr;
+		gpD3D11Device = nullptr;
 
 		m_deviceAcquired = false;
 	}

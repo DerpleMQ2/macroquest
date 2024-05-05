@@ -1,6 +1,6 @@
 /*
  * MacroQuest: The extension platform for EverQuest
- * Copyright (C) 2002-2023 MacroQuest Authors
+ * Copyright (C) 2002-present MacroQuest Authors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as published by
@@ -67,6 +67,52 @@ bool mq::RemoveTopLevelObject(const char* szName)
 mq::MQTopLevelObject* mq::FindTopLevelObject(const char* szName)
 {
 	return mqplugin::MainInterface->FindTopLevelObject(szName);
+}
+
+//============================================================================
+//============================================================================
+
+void mq::postoffice::DropboxAPI::Post(const mq::postoffice::Address& address, const std::string& data, const ResponseCallbackAPI& callback) const
+{
+	mqplugin::MainInterface->SendToActor(Dropbox, address, data, callback, mqplugin::ThisPlugin);
+}
+
+void mq::postoffice::DropboxAPI::PostReply(const std::shared_ptr<mq::postoffice::Message>& message, const std::string& data, uint8_t status) const
+{
+	mqplugin::MainInterface->ReplyToActor(Dropbox, message, data, status, mqplugin::ThisPlugin);
+}
+
+void mq::postoffice::DropboxAPI::Remove()
+{
+	mqplugin::MainInterface->RemoveActor(Dropbox, mqplugin::ThisPlugin);
+}
+
+mq::postoffice::DropboxAPI mq::postoffice::AddActor(ReceiveCallbackAPI&& receive)
+{
+	if (mqplugin::ThisPlugin != nullptr)
+	{
+		return mq::postoffice::DropboxAPI{
+			mqplugin::MainInterface->AddActor(mqplugin::ThisPlugin->name.c_str(), std::move(receive), mqplugin::ThisPlugin)
+		};
+	}
+
+	return mq::postoffice::DropboxAPI{ nullptr };
+}
+
+mq::postoffice::DropboxAPI mq::postoffice::AddActor(const char* localAddress, ReceiveCallbackAPI&& receive)
+{
+	std::string address(localAddress);
+	if (mqplugin::ThisPlugin != nullptr)
+		address = fmt::format("{}:{}", mqplugin::ThisPlugin->name, address);
+
+	return mq::postoffice::DropboxAPI{
+		mqplugin::MainInterface->AddActor(address.c_str(), std::move(receive), mqplugin::ThisPlugin)
+	};
+}
+
+void mq::postoffice::SendToActor(const Address& address, const std::string& data, const ResponseCallbackAPI& callback)
+{
+	mqplugin::MainInterface->SendToActor(nullptr, address, data, callback, mqplugin::ThisPlugin);
 }
 
 //============================================================================

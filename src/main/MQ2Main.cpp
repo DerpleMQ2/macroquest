@@ -1,6 +1,6 @@
 /*
  * MacroQuest: The extension platform for EverQuest
- * Copyright (C) 2002-2023 MacroQuest Authors
+ * Copyright (C) 2002-present MacroQuest Authors
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as published by
@@ -15,13 +15,13 @@
 #include "pch.h"
 #include "MQ2Main.h"
 #include "CrashHandler.h"
-
+#include "MQActorAPI.h"
 #include "MQ2KeyBinds.h"
 #include "ImGuiManager.h"
-
+#include "GraphicsResources.h"
 #include "EQLib/Logging.h"
+#include "mq/base/Logging.h"
 
-#include <date/date.h>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -35,12 +35,13 @@
 #endif
 
 #include <Psapi.h>
+
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "version.lib")
 
 #define CLIENT_OVERRIDE 0
 
-#if defined(LIVE)
+#if IS_LIVE_CLIENT
 
 #if !defined(_M_AMD64)
 #error Live build is only for x64
@@ -49,7 +50,7 @@
 #define MacroQuestWinClassName "__MacroQuestTray(Live)"
 #define MacroQuestWinName "MacroQuest(Live)"
 
-#elif defined(TEST)
+#elif IS_TEST_CLIENT
 
 #if !defined(_M_AMD64)
 #error Test build is only for x64
@@ -58,7 +59,16 @@
 #define MacroQuestWinClassName "__MacroQuestTray(Test)"
 #define MacroQuestWinName "MacroQuest(Test)"
 
-#elif defined(EMULATOR)
+#elif IS_BETA_CLIENT
+
+#if !defined(_M_AMD64)
+#error Beta build is only for x64
+#endif
+#pragma message("Building MacroQuest for BETA (x64)")
+#define MacroQuestWinClassName "__MacroQuestTray(Beta)"
+#define MacroQuestWinName "MacroQuest(Beta)"
+
+#elif IS_EMU_CLIENT
 
 #if defined(_M_AMD64)
 #error Emulator Build is only for x86
@@ -70,6 +80,7 @@
 #endif
 
 namespace fs = std::filesystem;
+using namespace std::chrono_literals;
 
 namespace mq {
 
@@ -85,6 +96,7 @@ void ShutdownInternalModules();
 MQModule* GetSpellsModule();
 MQModule* GetImGuiToolsModule();
 MQModule* GetDataAPIModule();
+MQModule* GetActorAPIModule();
 MQModule* GetGroundSpawnsModule();
 MQModule* GetSpawnsModule();
 MQModule* GetItemsModule();
@@ -105,17 +117,15 @@ void* ModuleListHandler = nullptr;
 void InitializeLogging()
 {
 	fs::path loggingPath = mq::internal_paths::Logs;
-	std::string filename = (loggingPath / fmt::format("MacroQuest-{}.log",
-		date::format("%Y%m%dT%H%M%SZ", date::floor<std::chrono::microseconds>(
-			std::chrono::system_clock::now())))).string();
 
-	// create color multi threaded logger
-	auto logger = spdlog::create<spdlog::sinks::basic_file_sink_mt>("mq", filename, true);
+	auto new_logger = std::make_shared<spdlog::logger>("MQ");
+	spdlog::set_default_logger(new_logger);
+
 	if (IsDebuggerPresent())
-		logger->sinks().push_back(std::make_shared<spdlog::sinks::msvc_sink_mt>());
-	logger->sinks().push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	{
+		new_logger->sinks().push_back(std::make_shared<spdlog::sinks::msvc_sink_mt>());
+	}
 
-	spdlog::set_default_logger(logger);
 #if LOG_FILENAMES
 	spdlog::set_pattern("%L %Y-%m-%d %T.%f [%n] %v (%@)");
 #else
@@ -124,8 +134,25 @@ void InitializeLogging()
 	spdlog::flush_on(spdlog::level::trace);
 	spdlog::set_level(spdlog::level::trace);
 
+	fmt::memory_buffer filename;
+	auto out = fmt::format_to(fmt::appender(filename),
+		"{}\\{}", mq::internal_paths::Logs, mq::CreateLogFilename("MacroQuest"));
+	*out = 0;
+
+	// Create file sink
+	try
+	{
+		auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename.data(), true);
+		new_logger->sinks().push_back(fileSink);
+	}
+	catch (const spdlog::spdlog_ex& ex)
+	{
+		SPDLOG_WARN("Failed to create file logger: {}, ex: {}",
+			std::string_view(filename.data(), filename.size()), ex.what());
+	}
+
 	SPDLOG_DEBUG("Logging Initialized");
-	eqlib::InitializeLogging(logger);
+	eqlib::InitializeLogging(new_logger);
 }
 
 void ShutdownLogging()
@@ -574,10 +601,9 @@ void DoMainThreadInitialization()
 {
 	gpMainAPI = new MainImpl();
 
-	InitializePipeClient();
 	InitializeMQ2Commands();
 	InitializeDisplayHook();
-	InitializeMouseHooks();
+	GraphicsResources_Initialize();
 	ImGuiManager_Initialize();
 
 	// this needs to be done before anything that would need to add a callback to string message parsing
@@ -591,6 +617,7 @@ void DoMainThreadInitialization()
 	AddInternalModule(GetImGuiToolsModule());
 	AddInternalModule(GetSpellsModule());
 	AddInternalModule(GetDataAPIModule());
+	AddInternalModule(GetActorAPIModule());
 	AddInternalModule(GetGroundSpawnsModule());
 	AddInternalModule(GetSpawnsModule());
 	AddInternalModule(GetItemsModule());
@@ -787,22 +814,20 @@ void MQ2Shutdown()
 	ShutdownInternalModules();
 	ShutdownMQ2KeyBinds();
 	ShutdownDisplayHook();
-	ShutdownMQ2DInput();
 	ShutdownChatHook();
 	ShutdownMQ2Pulse();
 	ShutdownLoginFrontend();
 	ShutdownMQ2AutoInventory();
-	ShutdownMouseHooks();
 	ShutdownMQ2CrashHandler();
 	ShutdownMQ2Commands();
 	ShutdownAnonymizer();
 	ShutdownMQ2Plugins();
 	ShutdownFailedPlugins();
 	ImGuiManager_Shutdown();
+	GraphicsResources_Shutdown();
 	ShutdownStringDB();
 	ShutdownDetours();
 	ShutdownMQ2Benchmarks();
-	ShutdownPipeClient();
 
 	DebugSpew("Shutdown completed");
 	ShutdownLogging();
@@ -901,8 +926,6 @@ DWORD WINAPI MQ2Start(void* lpParameter)
 
 		Sleep(500);
 	}
-
-	InitializeMQ2DInput();
 
 	DebugSpewAlways("%s", LoadedString);
 
@@ -1135,12 +1158,17 @@ MainImpl::MainImpl()
 {
 	pDataAPI = new MQDataAPI();
 	pDataAPI->Initialize();
+
+	pActorAPI = new MQActorAPI();
 }
 
 MainImpl::~MainImpl()
 {
 	delete pDataAPI;
 	pDataAPI = nullptr;
+
+	delete pActorAPI;
+	pActorAPI = nullptr;
 }
 
 bool MainImpl::AddTopLevelObject(const char* name, MQTopLevelObjectFunction callback, MQPlugin* owner)
@@ -1156,6 +1184,41 @@ bool MainImpl::RemoveTopLevelObject(const char* name, MQPlugin* owner)
 MQTopLevelObject* MainImpl::FindTopLevelObject(const char* name)
 {
 	return pDataAPI->FindTopLevelObject(name);
+}
+
+void MainImpl::SendToActor(
+	postoffice::Dropbox* dropbox,
+	const postoffice::Address& address,
+	const std::string& data,
+	const postoffice::ResponseCallbackAPI& callback,
+	MQPlugin* owner)
+{
+	pActorAPI->SendToActor(dropbox, address, data, callback, owner);
+}
+
+void MainImpl::ReplyToActor(
+	postoffice::Dropbox* dropbox,
+	const std::shared_ptr<postoffice::Message>& message,
+	const std::string& data,
+	uint8_t status,
+	MQPlugin* owner)
+{
+	pActorAPI->ReplyToActor(dropbox, message, data, status, owner);
+}
+
+postoffice::Dropbox* MainImpl::AddActor(
+	const char* localAddress,
+	postoffice::ReceiveCallbackAPI&& receive,
+	MQPlugin* owner)
+{
+	return pActorAPI->AddActor(localAddress, std::move(receive), owner);
+}
+
+void MainImpl::RemoveActor(
+	postoffice::Dropbox*& dropbox,
+	MQPlugin* owner)
+{
+	pActorAPI->RemoveActor(dropbox, owner);
 }
 
 MainImpl* gpMainAPI = nullptr;
