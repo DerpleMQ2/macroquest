@@ -283,8 +283,10 @@ int WINAPI memcheck4(unsigned char* buffer, size_t* count_)
 	size_t count = *count_ & 0xff;
 	uint8_t bmask = *gpMemCheckBitmask;
 
+	/*
 	if (!bmask && *gpMemCheckActive)
 		*gpMemCheckBitmask |= 1;
+	*/
 
 	// If we are not detouring memory that overlaps this region, just let it pass through.
 	AddressDetourState detourState = pDetourAPI->IsAddressDetoured(addr, count);

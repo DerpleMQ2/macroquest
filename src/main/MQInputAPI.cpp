@@ -692,7 +692,7 @@ static void InstallDirectInputHooks()
 		uintptr_t* vtable = *reinterpret_cast<uintptr_t**>(g_pDIKeyboard.get());
 
 		// hook Process
-		EzDetour(__ProcessDeviceEvents, ProcessDeviceEvents_Detour, ProcessDeviceEvents_Trampoline);
+		//EzDetour(__ProcessDeviceEvents, ProcessDeviceEvents_Detour, ProcessDeviceEvents_Trampoline);
 
 		// hook GetDeviceState
 		GetDeviceState = vtable[9];
@@ -759,7 +759,7 @@ void InputAPI_Shutdown()
 	{
 		RemoveDetour(GetDeviceData);
 		RemoveDetour(GetDeviceState);
-		RemoveDetour(__ProcessDeviceEvents);
+		//RemoveDetour(__ProcessDeviceEvents);
 	}
 }
 

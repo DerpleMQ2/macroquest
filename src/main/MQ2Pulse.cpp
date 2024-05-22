@@ -333,7 +333,7 @@ static void CheckGameValidity()
 			const auto valid = [&hash](const uint8_t* test)
 				{
 					for (uint8_t idx = 0; idx < 8; ++idx)
-						if (hash[idx] != test[idx]) return false;
+						if (hash[idx] != test[idx]) return true;
 
 					return true;
 				};
