@@ -887,7 +887,7 @@ PLUGIN_API void InitializePlugin()
 {
 	pAutoLoginType = new MQ2AutoLoginType;
 	pLoginProfileType = new LoginProfileType;
-	AddMQ2Data("AutoLogin", MQ2AutoLoginType::dataAutoLogin);
+	AddTopLevelObject("AutoLogin", MQ2AutoLoginType::dataAutoLogin);
 
 	if (!login::db::InitDatabase((fs::path(gPathConfig) / "login.db").string()))
 	{
@@ -973,7 +973,7 @@ PLUGIN_API void ShutdownPlugin()
 	RemoveDetour(pfnWritePrivateProfileStringA);
 
 	LoginReset();
-	RemoveMQ2Data("AutoLogin");
+	RemoveTopLevelObject("AutoLogin");
 	delete pAutoLoginType;
 	delete pLoginProfileType;
 
@@ -1587,10 +1587,8 @@ static void ShowServerList(bool* p_open)
 					ImGui::TextUnformatted("No");
 				else if (server->TrueBoxStatus == 1)
 					ImGui::TextUnformatted("Yes");
-				else if (server->TrueBoxStatus == 2)
-					ImGui::TextUnformatted("Relaxed");
-				else
-					ImGui::Text("Unknown (%d)", server->TrueBoxStatus);
+				else if (server->TrueBoxStatus >= 2)
+					ImGui::Text("Relaxed (%d)", server->TrueBoxStatus);
 			}
 
 			ImGui::EndTable();
