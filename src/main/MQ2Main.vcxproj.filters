@@ -416,6 +416,9 @@
     <ClCompile Include="emu\EmuExtensions.cpp">
       <Filter>Source Files\emu</Filter>
     </ClCompile>
+    <ClCompile Include="ZepEditorWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MQ2Commands.h">
@@ -681,6 +684,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mq\base\ScopeExit.h">
       <Filter>Header Files\mq\base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mq\imgui\ZepEditorWidget.h">
+      <Filter>Header Files\mq\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

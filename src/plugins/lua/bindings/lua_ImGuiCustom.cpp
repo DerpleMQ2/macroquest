@@ -15,6 +15,7 @@
 #include "pch.h"
 
 #include <mq/imgui/ConsoleWidget.h>
+#include <mq/imgui/ZepEditorWidget.h>
 #include <mq/imgui/ImGuiUtils.h>
 #include <mq/imgui/Widgets.h>
 #include <mq/Plugin.h>
@@ -23,6 +24,7 @@
 #include <imgui/imgui_internal.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <sol/sol.hpp>
+#include <zep/enums.h>
 
 #include <string>
 
@@ -33,7 +35,7 @@ namespace mq::lua::bindings {
 void lua_addimgui(std::string_view name, sol::function function, sol::this_state s);
 void lua_removeimgui(std::string_view name, sol::this_state s);
 
-void RegisterBindings_ImGuiCustom(sol::table& ImGui)
+void RegisterBindings_ImGuiCustom(sol::table& ImGui, sol::state_view lua)
 {
 	// Variables
 	ImGui.set("ConsoleFont", mq::imgui::ConsoleFont);
@@ -99,6 +101,58 @@ void RegisterBindings_ImGuiCustom(sol::table& ImGui)
 			[](mq::imgui::ConsoleWidget* pThis, const ImVec4& col, std::string_view text) { pThis->AppendText(text, MQColor(col), false); }
 		)
 	);
-}
 
+	// Widgets: ZepInputBox
+	ImGui.new_usertype<mq::imgui::ZepEditorWidget>(
+		"ZepEditor", sol::factories(&mq::imgui::ZepEditorWidget::Create),
+		"Render", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis) { pThis->Render(); },
+			[](mq::imgui::ZepEditorWidget* pThis, ImVec2 displaySize) { pThis->Render(displaySize); }
+		),
+		"Clear", &mq::imgui::ZepEditorWidget::Clear,
+		"IsCursorAtEnd", &mq::imgui::ZepEditorWidget::IsCursorAtEnd,
+		"SetSyntax", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis, const char* syntaxName) { pThis->SetSyntax(syntaxName); }
+		),
+		"AppendText", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis, std::string_view text) { pThis->AppendText(text, false); }
+		),
+		"SetText", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis, std::string_view text) { pThis->Clear();  pThis->AppendText(text, false); }
+		),
+		"GetText", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis) -> std::string { size_t bufferSize = pThis->GetTextLength(); std::string text; text.reserve(bufferSize); pThis->GetText(text); return text; }
+		),
+		"SetFontSize", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis, int size) { pThis->SetFontSize(size); }
+		),
+		"GetFontSize", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis) -> int { return pThis->GetFontSize(); }
+		),
+		"SetWindowFlags", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis, int flags) { pThis->SetWindowFlags(flags); }
+		),
+		"GetWindowFlags", sol::overload(
+			[](mq::imgui::ZepEditorWidget* pThis) -> int { return pThis->GetWindowFlags(); }
+		)
+	);
+
+	// ZepEditor Flags
+	lua.new_enum("ImGuiZepEditorWindowFlags",
+		"None"						, Zep::WindowFlags::None,
+		"ShowWhiteSpace"			, Zep::WindowFlags::ShowWhiteSpace,
+		"ShowCR"					, Zep::WindowFlags::ShowCR,
+		"ShowLineNumbers"			, Zep::WindowFlags::ShowLineNumbers,
+		"ShowIndicators"			, Zep::WindowFlags::ShowIndicators,
+		"HideScrollBar"				, Zep::WindowFlags::HideScrollBar,
+		"Modal"						, Zep::WindowFlags::Modal,
+		"WrapText"					, Zep::WindowFlags::WrapText,
+		"HideSplitMark"				, Zep::WindowFlags::HideSplitMark,
+		"GridStyle"					, Zep::WindowFlags::GridStyle,
+		"ShowLineBackground"		, Zep::WindowFlags::ShowLineBackground,
+		"ShowWrappedLineNumbers"	, Zep::WindowFlags::ShowWrappedLineNumbers,
+		"ShowAirLine"				, Zep::WindowFlags::ShowAirLine,
+		"HideTrailingNewline"		, Zep::WindowFlags::HideTrailingNewline
+	);
+}
 } // namespace mq::lua::bindings

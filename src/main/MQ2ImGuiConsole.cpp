@@ -26,6 +26,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "zep.h"
+
 #include <optional>
 #include "sqlite3.h"
 
@@ -557,6 +558,11 @@ public:
 		{
 			m_hoveredHyperlink = m_syntax[offset.Index()].hyperlinkId;
 		}
+	}
+
+	virtual void QueueUpdateSyntax(Zep::GlyphIterator startLocation, Zep::GlyphIterator endLocation)
+	{
+
 	}
 
 private:
